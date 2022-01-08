@@ -47,24 +47,27 @@ class Track:
             if len(event) == 1:
                 await asyncio.sleep(event[0]) # rest
             else:
-                await play_note(0, event[0], event[1], event[2])
+                await note(0, event[0], event[1], event[2], self.channel)
             self.play_cursor = (self.play_cursor + 1) % len(self.notes)
 
 async def main():
-    track1 = Track()
+    track1 = Track(channel=0)
     notes = generate_scale(major_scale, 2, 21)
-    note = 7
-    track1.add_note(1, notes[note])
+    n = 7
+    track1.add_note(1, notes[n])
     for i in range(1, 8):
         if random.randint(1, 100) < 25:
             track1.add_rest(random.choice([0.25, 0.5, 1]))
         else:
-            note += random.choice([-4, -3, -2, -1, 0, 1, 2, 3, 4])
-            track1.add_note(random.choice([0.25, 0.5, 1, 2]), notes[note], velocity=100)
-    # for i in range(1, 4):
-    #     note += random.choice([-4, -3, -2, -1, 0, 1, 2, 3, 4])
-    #     track1.add_note(random.choice([1]), notes[note], velocity=100, sustain=0)
-    await track1.play()
+            n += random.choice([-4, -3, -2, -1, 0, 1, 2, 3, 4])
+            # track1.add_note(random.choice([0.25, 0.5, 1, 2]), notes[n], velocity=100)
+            track1.add_note(random.choice([0.5]), notes[n], velocity=100)
+    
+    track2 = Track(channel=1)
+    for i in range(1, 4):
+        track2.add_note(0.5, 42, 100)
+
+    await asyncio.gather(track1.play(), track2.play())
 
 
 asyncio.run(main())
