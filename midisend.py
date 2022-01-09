@@ -65,10 +65,18 @@ class Sequencer:
             else:
                 self.tasks.append(asyncio.create_task(asyncio.sleep(event.length)))
 
-        next_cursor = (self.cursor + 1) % len(self.events)
-        dur = self.times[next_cursor] - cur_time
-        self.tasks.append(asyncio.create_task(timer(dur, self.timer_callback)))
-        self.cursor = next_cursor
+        self.cursor += 1
+        if self.cursor >= len(self.events):
+            self.cursor = 0
+            self.tasks.append(asyncio.create_task(timer(events[0].length, self.timer_callback)))
+        else:
+            dur = self.times[self.cursor] - cur_time
+            self.tasks.append(asyncio.create_task(timer(dur, self.timer_callback)))
+
+    def print_events(self):
+        for key, events in self.events.items():
+            for event in events:
+                print("t: %s %s %s %s" % (key, event.note_num, event.length, event.channel))
 
     async def play(self):
         self.timer_callback() #schedule first event
@@ -91,7 +99,7 @@ class Track:
 async def main():
     track1 = Track(channel=0)
     for i in range(1, 4):
-        track1.add_note(0.5, 42+i, 100)
+        track1.add_note(0.5, 36+i, 100)
     # notes = generate_scale(major_scale, 2, 21)
     # n = 7
     # track1.add_note(1, notes[n])
@@ -112,6 +120,7 @@ async def main():
     sequencer.add_track(track2)
 
     await sequencer.play()
+    # sequencer.print_events()
 
     # await asyncio.gather(track1.play(), track2.play())
 
