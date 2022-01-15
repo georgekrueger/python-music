@@ -34,7 +34,6 @@ class Event:
         self.length = length
         self.note_num = note_num
         self.velocity = velocity
-        self.t = None
         self.channel = None
 
 class Sequencer:
@@ -48,18 +47,19 @@ class Sequencer:
         t = 0
         for event in track.events:
             event.channel = track.channel
-            event.t = t
-            if t not in self.events:
-                self.events[t] = []
-            self.events[t].append(event)
+            self.add_event(t, event)
             t += event.length
             if t >= track.length:
                 break
         if t < track.length:
-            if t not in self.events:
-                self.events[t] = []
-            self.events[t].append(Event(track.length - t))
+            self.add_event(t, Event(track.length - t))
         self.times = list(self.events) # list of keys (times)
+
+    # add an event
+    def add_event(self, time, event):
+        if time not in self.events:
+            self.events[time] = []
+        self.events[time].append(event)
 
     def timer_callback(self):
         cur_time = self.times[self.cursor]
