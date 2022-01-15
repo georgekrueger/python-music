@@ -30,38 +30,32 @@ async def timer(t, callback):
     callback()
 
 class Event:
-    def __init__(self, length, note_num = None, velocity = None):
+    def __init__(self, length, note_num = None, velocity = None, channel = None):
         self.length = length
         self.note_num = note_num
         self.velocity = velocity
-        self.channel = None
+        self.channel = channel
 
-class Sequencer:
-    def __init__(self):
+class Song:
+    def __init__(self, length):
+        self.length = length
         self.events = OrderedDict()
-        self.times = []
+        self.times = []  # order list of event start times
         self.tasks = []
         self.cursor = 0
 
-    def add_track(self, track):
-        t = 0
-        for event in track.events:
-            event.channel = track.channel
-            self.add_event(t, event)
-            t += event.length
-            if t >= track.length:
-                break
-        if t < track.length:
-            self.add_event(t, Event(track.length - t))
-        self.times = list(self.events) # list of keys (times)
-
     # add an event
     def add_event(self, time, event):
+        if time >= self.length:
+            print("not adding event at time %s that is >= to song length %s" % (time, self.length))
+            return
         if time not in self.events:
             self.events[time] = []
         self.events[time].append(event)
+        self.times = list(self.events) # re-generate list of times
 
     def timer_callback(self):
+        # play the event(s) at cursor
         cur_time = self.times[self.cursor]
         events = self.events[cur_time]
         #print("sequencer timer. schedule %s events" % (len(events)))
@@ -71,10 +65,12 @@ class Sequencer:
             else:
                 self.tasks.append(asyncio.create_task(asyncio.sleep(event.length)))
 
+        # increment cursor to the next event and set a timer to fire for the it
+        # if the next event is past the end, then set a timer for the remaining time left in the song
         self.cursor += 1
         if self.cursor >= len(self.events):
             self.cursor = 0
-            self.tasks.append(asyncio.create_task(timer(events[0].length, self.timer_callback)))
+            self.tasks.append(asyncio.create_task(timer(self.length - cur_time, self.timer_callback)))
         else:
             dur = self.times[self.cursor] - cur_time
             self.tasks.append(asyncio.create_task(timer(dur, self.timer_callback)))
@@ -85,29 +81,12 @@ class Sequencer:
                 print("t: %s %s %s %s" % (key, event.note_num, event.length, event.channel))
 
     async def play(self):
-        self.timer_callback() #schedule first event
+        self.cursor = 0
+        self.tasks.append(asyncio.create_task(timer(self.times[0], self.timer_callback)))
         while True:
             await asyncio.wait(self.tasks)
 
-class Track:
-    def __init__(self, length, channel=0):
-        self.length = length
-        self.channel = channel
-        self.events = []
-
-    def add_note(self, length, note_num=None, velocity=100):
-        print("add note %s %s %s" % (length, note_num, velocity))
-        self.events.append(Event(length, note_num, velocity))
-
-    def add_rest(self, length):
-        print("add rest %s" % length)
-        self.events.append(Event(length))
-
 async def main():
-    track1 = Track(4, channel=0)
-    for i in range(1, 5):
-        track1.add_note(0.5, 36+i, 100)
-
     # notes = generate_scale(major_scale, 2, 21)
     # n = 7
     # track1.add_note(1, notes[n])
@@ -119,19 +98,30 @@ async def main():
     #         # track1.add_note(random.choice([0.25, 0.5, 1, 2]), notes[n], velocity=100)
     #         track1.add_note(random.choice([0.5]), notes[n], velocity=100)
 
-    track2 = Track(4, channel=1)
-    for i in range(0, 8):
-        print(i)
-        track2.add_note(0.5, 42, 100)
+    # track2 = Track(4, channel=1)
+    # for i in range(0, 8):
+    #     print(i)
+    #     track2.add_note(0.5, 42, 100)
 
-    sequencer = Sequencer()
-    sequencer.add_track(track1)
-    sequencer.add_track(track2)
+    # sequencer = Sequencer()
+    # sequencer.add_track(track1)
+    # sequencer.add_track(track2)
 
-    await sequencer.play()
     # sequencer.print_events()
 
-    # await asyncio.gather(track1.play(), track2.play())
+    beat = 0.5
+    song = Song(beat * 4)
+    time = 0
+    for i in range(0, 4):
+        song.add_event(time, Event(beat, 36+i, 100, 0))
+        time += beat
+
+    time = 0
+    for i in range(0, 4):
+        song.add_event(time, Event(beat, 42, 70, 1))
+        time += beat
+
+    await song.play()
 
 
 asyncio.run(main())
