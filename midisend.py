@@ -44,7 +44,7 @@ async def main():
     n = 14
     for i in range(0, 8):
         n += random.choice([-4, -3, -2, -1, 0, 1, 2, 3, 4])
-        t = random.choice([beat/2, beat, beat*2])
+        t = random.choice([beat/2, beat, beat*2, beat*4])
         song1.add_event(time, song.Event(t, notes[n], random.randint(30,100), 0))
         time += t
 
