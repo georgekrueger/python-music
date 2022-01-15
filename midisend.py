@@ -53,6 +53,7 @@ class Song:
             self.events[time] = []
         self.events[time].append(event)
         self.times = list(self.events) # re-generate list of times
+        self.times.sort()
 
     def timer_callback(self):
         # play the event(s) at cursor
@@ -81,6 +82,7 @@ class Song:
                 print("t: %s %s %s %s" % (key, event.note_num, event.length, event.channel))
 
     async def play(self):
+        print(self.times)
         self.cursor = 0
         self.tasks.append(asyncio.create_task(timer(self.times[0], self.timer_callback)))
         while True:
@@ -113,8 +115,10 @@ async def main():
     song = Song(beat * 4)
     time = 0
     for i in range(0, 4):
-        song.add_event(time, Event(beat, 36+i, 100, 0))
-        time += beat
+        # t = random.choice([beat/2, beat, beat*2])
+        t = beat * 2
+        song.add_event(time, Event(t, 36+i, 100, 0))
+        time += t
 
     time = 0
     for i in range(0, 4):
