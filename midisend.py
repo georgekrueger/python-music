@@ -112,16 +112,16 @@ async def main():
     # sequencer.print_events()
 
     beat = 0.5
-    song = Song(beat * 4)
+    song = Song(beat * 8)
     time = 0
-    for i in range(0, 4):
-        # t = random.choice([beat/2, beat, beat*2])
-        t = beat * 2
-        song.add_event(time, Event(t, 36+i, 100, 0))
+    for i in range(0, 8):
+        t = random.choice([beat/2, beat, beat*2])
+        # t = beat * 2
+        song.add_event(time, Event(t, 36+i, random.randint(30,100), 0))
         time += t
 
     time = 0
-    for i in range(0, 4):
+    for i in range(0, 8):
         song.add_event(time, Event(beat, 42, 70, 1))
         time += beat
 
