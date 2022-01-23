@@ -12,8 +12,10 @@ import random
 
 fluidsynth.init("keys.sf2")
 
+#print( chords.triads("C")[:-1] +  [chords.triads("c")[0]] + chords.triads("c")[2:] )
+
 t = Track()
-chord_list = chords.triads("C")[:-1] + chords.triads("c")
+chord_list = chords.triads("C")[:-1] +  [chords.triads("c")[0]] + chords.triads("c")[2:]
 print(chord_list)
 
 def octave(note, n):
