@@ -15,11 +15,11 @@ import random
 
 #print(notes.__file__)
 
-print(chords.determine(["E", "C", "G"], shorthand=True))
-print(chords.determine(['C', 'E', 'A']))
+#print(chords.determine(["E", "C", "G"], shorthand=True))
+#print(chords.determine(['C', 'E', 'A']))
 chord1 = chords.triads("C")[0]
 chord1_nc = NoteContainer(chord1)
-print("%s %s" % (chord1_nc.get_note_names(), chords.determine(chord1_nc.get_note_names())))
+#print("%s %s" % (chord1_nc.get_note_names(), chords.determine(chord1_nc.get_note_names())))
 
 fluidsynth.init("keys.sf2")
 
@@ -42,59 +42,76 @@ fluidsynth.init("keys.sf2")
 # build a master chord list
 chord_list = []
 for i in range(0, 6):
-  chord_list.append((chords.triads("C")[i], "%s" % (i+1)))
+    chord_list.append((chords.triads("C")[i], "%s" % (i+1)))
 chord_list.append((chords.triads("c")[0], "1*"))
 for i in range(2, 7):
-  chord_list.append((chords.triads("c")[i], "%s*" % (i+1)))
+    chord_list.append((chords.triads("c")[i], "%s*" % (i+1)))
 
 def octave(note, n):
     return Note(note.name, note.octave+n)
 
-# pick some random chords from the list
+# pick some chords from the list
 new_chord_list = []
 for i in range(0, 6):
-  new_chord_list.append(chord_list[random.randint(0, len(chord_list)-1)])
+    new_chord_list.append(chord_list[random.randint(0, len(chord_list)-1)])
 
 composition = Composition()
-track = Track()
+
+def makeBassChord(triad):
+    return NoteContainer([
+                  octave(triad[0], -2),
+                  octave(triad[2], -2), 
+                  octave(triad[1], -1)
+                  ])
+
+def arpeggiate(chord, track):
+    # print(chord[0])
+    track.add_notes(NoteContainer(chord[0]), 4)
+    track.add_notes(NoteContainer(chord[1]), 4)
+    track.add_notes(NoteContainer(chord[2]), 4)
+    track.add_notes(NoteContainer(chord[1]), 4)
+
+def repeat(track, count):
+    new_track = Track()
+    for i in range(0, count):
+        for bar in track:
+            new_track.add_bar(bar)
+    return new_track
 
 chosen_chords = []
-for i in range(0, 7):
+
+track = Track()
+triad = NoteContainer(chord_list[0][0])
+# track.add_notes(makeBassChord(triad), 1)
+c = makeBassChord(triad)
+print("[%s]: %s" % (c, c.get_note_names()))
+arpeggiate(c, track)
+chosen_chords.append(chord_list[0])
+
+for i in range(0, 3):
     n = random.randint(0, len(new_chord_list)-1)
     chosen_chord = new_chord_list[n]
     chosen_chords.append(chosen_chord)
     triad = NoteContainer(chosen_chord[0])
-    c = NoteContainer([
-                      octave(triad[0], -2),
-                      octave(triad[0], -1), 
-                      octave(triad[2], -1)
-                      ])
-    print("[%s]: %s %s" % (new_chord_list[n][1], chords.determine(c.get_note_names(), shorthand=True), c.get_note_names()))
-    track.add_notes(c, 1)
+    c = makeBassChord(triad)
+    print("[%s]: %s" % (c, c.get_note_names()))
+    #track.add_notes(c, 1)
+    arpeggiate(c, track)
 
-triad = NoteContainer(chord_list[0][0])
-c = NoteContainer([
-                  octave(triad[0], -2),
-                  octave(triad[0], -1), 
-                  octave(triad[2], -1)
-                  ])
-track.add_notes(c, 1)
-chosen_chords.append(chord_list[0])
+composition.add_track(repeat(track, 2))
 
-composition.add_track(track)
+# print(chosen_chords)
 
-print(chosen_chords)
+# track = Track()
+# for chord in chosen_chords:
+#   triad = NoteContainer(chord[0])
+#   c = NoteContainer([triad[1], triad[2]])
+#   print("%s" % (triad.get_note_names()))
+#   track.add_notes(c, 1)
 
-track = Track()
-for chord in chosen_chords:
-  triad = NoteContainer(chord[0])
-  c = NoteContainer([triad[1], triad[2]])
-  print("%s" % (triad.get_note_names()))
-  track.add_notes(c, 1)
+# composition.add_track(track)
 
-composition.add_track(track)
-
-fluidsynth.play_Composition(composition, [1, 1], 100)
+fluidsynth.play_Composition(composition, [1], 100)
 midi_file_out.write_Track("song.mid", track, 100)
 
 #LilyPond.to_png(LilyPond.from_Composition(composition), "mysong")
