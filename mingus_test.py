@@ -66,12 +66,14 @@ def makeBassChord(triad):
 
 def arpeggiate(chord, track):
     # print(chord[0])
-    track.add_notes(NoteContainer(chord[0]), 4)
-    track.add_notes(NoteContainer(chord[1]), 4)
-    track.add_notes(NoteContainer(chord[2]), 4)
-    track.add_notes(NoteContainer(chord[1]), 4)
+    track.add_notes(NoteContainer(chord[0]), 2)
+    track.add_notes(NoteContainer(chord[1]), 2)
+    # track.add_notes(NoteContainer(chord[0]), 4)
+    # track.add_notes(NoteContainer(chord[1]), 4)
+    # track.add_notes(NoteContainer(chord[2]), 4)
+    # track.add_notes(NoteContainer(chord[1]), 4)
 
-def repeat(track, count):
+def repeat_track(track, count):
     new_track = Track()
     for i in range(0, count):
         for bar in track:
@@ -82,7 +84,6 @@ chosen_chords = []
 
 track = Track()
 triad = NoteContainer(chord_list[0][0])
-# track.add_notes(makeBassChord(triad), 1)
 c = makeBassChord(triad)
 print("[%s]: %s" % (c, c.get_note_names()))
 arpeggiate(c, track)
@@ -98,21 +99,25 @@ for i in range(0, 3):
     #track.add_notes(c, 1)
     arpeggiate(c, track)
 
-composition.add_track(repeat(track, 2))
+composition.add_track(repeat_track(track, 2))
 
 # print(chosen_chords)
 
-# track = Track()
-# for chord in chosen_chords:
-#   triad = NoteContainer(chord[0])
-#   c = NoteContainer([triad[1], triad[2]])
-#   print("%s" % (triad.get_note_names()))
-#   track.add_notes(c, 1)
+track2 = Track()
+for chord in chosen_chords:
+    print("here", chord)
+    triad = NoteContainer(chord[0])
+    n = random.randint(0, len(triad)-1)
+    c = NoteContainer([octave(triad[n], 2)])
+    #print("%s" % (triad.get_note_names()))
+    track2.add_notes(c, 1)
 
-# composition.add_track(track)
+composition.add_track(repeat_track(track2, 2))
 
-fluidsynth.play_Composition(composition, [1], 100)
-midi_file_out.write_Track("song.mid", track, 100)
+# fluidsynth.play_Track(track2, 100)
+
+fluidsynth.play_Composition(composition, [1, 2], 100)
+# midi_file_out.write_Track("song.mid", track, 100)
 
 #LilyPond.to_png(LilyPond.from_Composition(composition), "mysong")
 
