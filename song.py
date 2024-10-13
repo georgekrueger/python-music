@@ -6,7 +6,7 @@ from collections import OrderedDict
 outport = mido.open_output('loopMIDI Port 1')
 
 async def note(length, note_num=None, velocity=100, channel=0):
-    # print("[%s] play note %s %s %s" % (datetime.now().time(), length, note_num, velocity))
+    print("[%s] play note %s %s %s" % (datetime.now().time(), length, note_num, velocity))
     outport.send(mido.Message('note_on', note=note_num,velocity=velocity, channel=channel))
     await asyncio.sleep(length)
     outport.send(mido.Message('note_off', note=note_num, channel=channel))
