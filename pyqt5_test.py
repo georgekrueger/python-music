@@ -139,6 +139,7 @@ class ClickableZonedWidget(QWidget):
                         notes.append(intervals.major_seventh(note_name))
                 if modifiers & Qt.AltModifier:
                     print("Alt key pressed")
+                    notes.append(intervals.major_second(note_name))
 
                 allNotesOff()
 
