@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 import sys
+import atexit
 import rtmidi
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel
 from PyQt5.QtGui import QPixmap, QPainter, QRegion, QPolygon, QPen, QBrush, QFont
-from PyQt5.QtCore import Qt, QPoint
+from PyQt5.QtCore import Qt, QPoint, QTimer
 from shapely.geometry import Polygon
 import mingus.core.chords as chords
+import mingus.core.intervals as intervals
 from mingus.containers import Note
 from mingus.containers import NoteContainer
 
@@ -22,18 +24,26 @@ else:
     print("create virtual port")
     midiout.open_virtual_port("My virtual output")
 
+note_timer = QTimer()
+
 def allNotesOff():
     for note in g_notes_on:
         midiout.send_message([0x80, note, 0])
     g_notes_on.clear()
+    note_timer.stop()
+
+note_timer.timeout.connect(allNotesOff)
 
 def noteOn(note, velocity):
     g_notes_on.add(note)
     midiout.send_message([0x90, note, velocity])
+    note_timer.start(3000)
 
 def noteOff(note):
     g_notes_on.remove(note)
     midiout.send_message([0x80, note, 0])
+    if g_notes_on.empty():
+        note_timer.stop()
 
 def pointOnCircle(center, radius, angle):
     '''
@@ -106,26 +116,50 @@ class ClickableImage(QWidget):
         for name, polygon in self.zones.items():
             if polygon.containsPoint(pos, Qt.OddEvenFill):
                 print(f"Clicked on zone: {name}")
+
                 notes = []
-                if name[-1] == "m":
-                    # minor chord
-                    note_name = name[:-1]
+                note_name = name
+                minor = False
+                if name.islower():
+                    note_name = name[0].upper() + name[1:]
+                    minor = True
+                
+                if minor:
                     notes = chords.minor_triad(note_name)
                 else:
-                    notes = chords.major_triad(name)
+                    notes = chords.major_triad(note_name)
+
+                print("note_name: %s" % (note_name))
+            
+                modifiers = event.modifiers()
+                if modifiers & Qt.ControlModifier:
+                    print("Control key pressed")
+                    if modifiers & Qt.ShiftModifier or minor:
+                        notes.append(intervals.minor_seventh(note_name))
+                    else:
+                        notes.append(intervals.major_seventh(note_name))
+                if modifiers & Qt.AltModifier:
+                    print("Alt key pressed")
 
                 allNotesOff()
 
+                print(notes)
+
                 # chord = NoteContainer()
                 for note in notes:
-                    noteOn(int(Note(note, 4)), 100)
+                    noteOn(int(Note(note, 5)), 100)
                     # chord.add_note(Note(note, 4))
 
                 break
 
-flat = "\u266d"
+
+def cleanup():
+    allNotesOff()
+
+atexit.register(cleanup)
+
 outer_notes = ["A", "E", "B", "Gb", "Db", "Ab", "Eb", "Bb", "F", "C", "G", "D"]
-inner_notes = ["F#m", "C#m", "G#m", "Ebm", "Bbm", "Fm", "Cm", "Gm", "Dm", "Am", "Em", "Bm"]
+inner_notes = ["f#", "c#", "g#", "eb", "bb", "f", "c", "g", "d", "a", "e", "b"]
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
