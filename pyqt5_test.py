@@ -74,11 +74,10 @@ def lineIntersection(line1, line2):
     y = det(d, ydiff) / div
     return x, y
 
-class ClickableImage(QWidget):
-    def __init__(self, imagePath):
+class ClickableZonedWidget(QWidget):
+    def __init__(self):
         super().__init__()
 
-        # self.pixmap = QPixmap(imagePath)
         self.zones = {}  # Dictionary to store clickable zones
 
         self.initUI()
@@ -163,7 +162,7 @@ inner_notes = ["f#", "c#", "g#", "eb", "bb", "f", "c", "g", "d", "a", "e", "b"]
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    window = ClickableImage('circle_of_fifths.png')
+    window = ClickableZonedWidget()
 
     center = [330, 330]
     outer_radius = 310
